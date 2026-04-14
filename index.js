@@ -13,10 +13,27 @@ app.use(express.json());
 // ── CONFIG ──
 const ADMIN_PASSWORD = "admin123";
 const QUESTIONS = [
-  { q: "Jaka jest stolica Polski?", a: "Kraków", b: "Warszawa", c: "Gdańsk", d: "Poznań", correct: "b" },
-  { q: "Ile wynosi 7 × 8?", a: "54", b: "48", c: "56", d: "64", correct: "c" },
-  { q: "Który pierwiastek ma symbol Fe?", a: "Fluor", b: "Fosfor", c: "Żelazo", d: "Francez", correct: "c" },
-];
+[
+  { q: "Jaki jest styl architektoniczny budynku naszej szkoły?", a: "Gotycki", b: "Neogotycki", c: "Modernistyczny", d: "Barokowy", correct: "b" },
+
+  { q: "Jaki numer miało gimnazjum, które istniało przed ZS8?", a: "11", b: "7", c: "13", d: "21", correct: "c" },
+
+  { q: "W którym roku dobudowano nową część szkoły?", a: "2005–2006", b: "2008–2009", c: "2010–2011", d: "2002–2003", correct: "b" },
+
+  { q: "Kto prowadzi szkolny zespół Crossover?", a: "M. Lechociński", b: "T. Fulara", c: "K. Szczepański", d: "A. Gołąbek", correct: "b" },
+
+  { q: "Jakiego patrona miało Gimnazjum nr 13?", a: "UNESCO", b: "Unia Europejska", c: "Jan Paweł II", d: "Mikołaj Kopernik", correct: "b" },
+
+  { q: "Jak nazywa się drużyna DI, która dwa lata temu pojechała do Stanów?", a: "Beta Squad", b: "Gamma Team", c: "Alfa Team", d: "Delta Force", correct: "c" },
+
+  { q: "Kto prowadzi Szkolne Koło Turystyczne Skalnik?", a: "E. Sojka", b: "K. Sojka", c: "T. Fulara", d: "M. Tokarek", correct: "a" },
+
+  { q: "W którym roku założono zespół Crossover?", a: "2000", b: "2005", c: "2003", d: "2008", correct: "c" },
+
+  { q: "Jaki jest numer sali biologicznej (tej ze zwierzętami)?", a: "18", b: "21", c: "15", d: "24", correct: "b" },
+
+  { q: "Kto należy do dyrekcji szkoły?", a: "T. Fulara, E. Sojka, K. Nowak", b: "A. Wyczlińska, M. Lechociński, K. Szczepański", c: "M. Tokarek, J. Gajek, A. Jagucka", d: "K. Ignaszewska, B. Lewczuk, E. Liszewska", correct: "b" }
+]];
 const TIME_PER_QUESTION = 20; // seconds
 
 // ── STATE ──

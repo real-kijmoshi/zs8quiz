@@ -4,8 +4,8 @@ const fs = require("fs");
 const path = require("path");
 
 // ── CONFIG ──
-const SERVER_URL = "http://localhost:3000";
-const BOT_COUNT = 10000;           // how many bots to connect
+const SERVER_URL = "http://72.61.183.23:3000/";
+const BOT_COUNT = 600;           // how many bots to connect
 const JOIN_DELAY_MS = 1;      // delay between each bot joining (ms)
 const ANSWER_DELAY_MIN = 1000;  // min ms before answering
 const ANSWER_DELAY_MAX = 8000;  // max ms before answering
