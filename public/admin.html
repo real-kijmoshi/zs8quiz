@@ -1,0 +1,211 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz ZS8 - Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0e0e12;--surface:#1a1a22;--surface2:#24242e;
+  --border:#2e2e3a;--text:#e8e6f0;--text2:#88879a;
+  --accent:#6c5ce7;--accent-soft:#6c5ce722;
+  --red:#e74c3c;--green:#27ae60;--blue:#3498db;--amber:#f39c12;
+}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:440px;width:100%;padding:24px}
+
+/* Login */
+.login{text-align:center}
+.login-title{font-size:1.1rem;font-weight:700;margin-bottom:20px;color:var(--text2)}
+.login input{
+  width:100%;padding:13px 14px;
+  border:1.5px solid var(--border);border-radius:10px;
+  background:var(--surface);color:var(--text);
+  font-family:inherit;font-size:.95rem;
+  outline:none;margin-bottom:12px;
+  transition:border-color .2s,box-shadow .2s;
+}
+.login input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.login-err{color:var(--red);font-size:.85rem;margin-top:8px;display:none}
+
+.btn{
+  width:100%;padding:13px;border:none;border-radius:10px;
+  font-family:inherit;font-size:.95rem;font-weight:600;
+  cursor:pointer;transition:opacity .15s,transform .1s;
+  color:#fff;
+}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.btn-accent{background:var(--accent)}
+.btn-green{background:var(--green)}
+.btn-blue{background:var(--blue)}
+.btn-amber{background:var(--amber)}
+.btn-red{background:var(--red)}
+.btn-surface{background:var(--surface2);color:var(--text2)}
+
+/* Panel */
+.panel{display:none}
+.panel-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;
+}
+.panel-header h1{font-size:1.2rem;font-weight:700;letter-spacing:-.3px}
+.panel-header .badge{
+  font-size:.75rem;font-weight:600;
+  padding:4px 10px;border-radius:6px;
+  background:var(--accent-soft);color:var(--accent);
+}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat{
+  background:var(--surface);border:1px solid var(--border);
+  padding:14px;border-radius:10px;text-align:center;
+}
+.stat .num{font-size:1.8rem;font-weight:800;color:var(--text)}
+.stat .lbl{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-top:2px}
+
+.status-bar{
+  padding:10px 14px;border-radius:8px;
+  background:var(--surface);border:1px solid var(--border);
+  font-size:.85rem;color:var(--text2);
+  margin-bottom:16px;text-align:center;
+}
+
+.controls{display:flex;flex-direction:column;gap:8px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="login" id="login">
+    <p class="login-title">Panel administracyjny</p>
+    <input type="password" id="password" placeholder="Hasło" autocomplete="off">
+    <button class="btn btn-accent" id="login-btn">Zaloguj</button>
+    <p class="login-err" id="login-error">Nieprawidłowe hasło</p>
+  </div>
+
+  <div class="panel" id="panel">
+    <div class="panel-header">
+      <h1>Panel quizu</h1>
+      <span class="badge">Admin</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="num" id="player-count">0</div><div class="lbl">Graczy</div></div>
+      <div class="stat"><div class="num" id="question-info">-</div><div class="lbl">Pytanie</div></div>
+    </div>
+    <div class="status-bar" id="status">Lobby - oczekiwanie na graczy</div>
+    <div class="controls">
+      <button class="btn btn-surface" id="autoplay-btn">Autoplay: WYŁ</button>
+      <button class="btn btn-green" id="start-btn">Rozpocznij quiz</button>
+      <button class="btn btn-blue" id="next-btn" disabled>Następne pytanie</button>
+      <button class="btn btn-amber" id="skip-btn" disabled>Pomiń timer</button>
+      <button class="btn btn-red" id="reset-btn">Resetuj quiz</button>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+
+document.getElementById('login-btn').addEventListener('click', () => {
+  socket.emit('admin-login', { password: document.getElementById('password').value });
+});
+document.getElementById('password').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('login-btn').click();
+});
+
+socket.on('admin-ok', ({ state, questionIndex, playerCount, totalQuestions, autoplay }) => {
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('panel').style.display = 'block';
+  document.getElementById('player-count').textContent = playerCount;
+  updateAutoplayUI(autoplay);
+  updateState(state, questionIndex, totalQuestions);
+});
+
+socket.on('admin-fail', () => {
+  document.getElementById('login-error').style.display = 'block';
+});
+
+socket.on('player-count', ({ count }) => {
+  document.getElementById('player-count').textContent = count;
+});
+
+socket.on('question-started', ({ index, total }) => {
+  document.getElementById('question-info').textContent = (index + 1) + '/' + total;
+  document.getElementById('status').textContent = 'Pytanie ' + (index + 1) + ' - gracze odpowiadają...';
+  document.getElementById('start-btn').disabled = true;
+  document.getElementById('next-btn').disabled = true;
+  document.getElementById('skip-btn').disabled = false;
+});
+
+socket.on('answer-count', ({ count, total }) => {
+  document.getElementById('status').textContent = 'Odpowiedzi: ' + count + '/' + total;
+});
+
+socket.on('reveal-done', ({ index }) => {
+  document.getElementById('status').textContent = 'Odpowiedź pokazana - kliknij dalej';
+  document.getElementById('next-btn').disabled = false;
+  document.getElementById('skip-btn').disabled = true;
+});
+
+socket.on('final-results', () => {
+  document.getElementById('status').textContent = 'Quiz zakończony! Wyniki na ekranie.';
+  document.getElementById('next-btn').disabled = true;
+  document.getElementById('skip-btn').disabled = true;
+});
+
+socket.on('quiz-reset', () => {
+  document.getElementById('status').textContent = 'Lobby - oczekiwanie na graczy';
+  document.getElementById('question-info').textContent = '-';
+  document.getElementById('start-btn').disabled = false;
+  document.getElementById('next-btn').disabled = true;
+  document.getElementById('skip-btn').disabled = true;
+});
+
+document.getElementById('autoplay-btn').addEventListener('click', () => socket.emit('toggle-autoplay'));
+socket.on('autoplay-state', ({ autoplay }) => updateAutoplayUI(autoplay));
+function updateAutoplayUI(on) {
+  const btn = document.getElementById('autoplay-btn');
+  btn.textContent = 'Autoplay: ' + (on ? 'WŁ' : 'WYŁ');
+  if (on) { btn.classList.remove('btn-surface'); btn.classList.add('btn-accent'); }
+  else { btn.classList.remove('btn-accent'); btn.classList.add('btn-surface'); }
+}
+
+document.getElementById('start-btn').addEventListener('click', () => socket.emit('start-quiz'));
+document.getElementById('next-btn').addEventListener('click', () => socket.emit('next-question'));
+document.getElementById('skip-btn').addEventListener('click', () => socket.emit('skip-timer'));
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (confirm('Na pewno zresetować quiz?')) socket.emit('reset-quiz');
+});
+
+function updateState(state, qi, total) {
+  if (state === 'lobby') {
+    document.getElementById('status').textContent = 'Lobby - oczekiwanie na graczy';
+    document.getElementById('start-btn').disabled = false;
+  } else if (state === 'question') {
+    document.getElementById('question-info').textContent = (qi + 1) + '/' + total;
+    document.getElementById('status').textContent = 'Pytanie ' + (qi + 1) + ' trwa...';
+    document.getElementById('start-btn').disabled = true;
+    document.getElementById('skip-btn').disabled = false;
+  } else if (state === 'reveal') {
+    document.getElementById('question-info').textContent = (qi + 1) + '/' + total;
+    document.getElementById('status').textContent = 'Odpowiedź pokazana';
+    document.getElementById('start-btn').disabled = true;
+    document.getElementById('next-btn').disabled = false;
+  } else if (state === 'finished') {
+    document.getElementById('status').textContent = 'Quiz zakończony!';
+    document.getElementById('start-btn').disabled = true;
+  }
+}
+</script>
+</body>
+</html>

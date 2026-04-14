@@ -1,0 +1,326 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz ZS8 - Ekran</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0e0e12;--surface:#1a1a22;--surface2:#24242e;
+  --border:#2e2e3a;--text:#e8e6f0;--text2:#88879a;
+  --accent:#6c5ce7;
+  --red:#e74c3c;--blue:#3498db;--amber:#f39c12;--green:#27ae60;
+}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── Lobby ── */
+.lobby{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100vh;position:relative;z-index:1;
+}
+.lobby-mark{
+  width:80px;height:80px;border-radius:20px;
+  background:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:2.2rem;font-weight:900;color:#fff;
+  margin-bottom:20px;letter-spacing:-2px;
+}
+.lobby h1{font-size:2.8rem;font-weight:900;letter-spacing:-1px;margin-bottom:6px}
+.lobby .sub{font-size:1.1rem;color:var(--text2);margin-bottom:40px}
+.counter{font-size:7rem;font-weight:900;letter-spacing:-4px;color:var(--text);line-height:1;transition:transform .2s}
+.counter.bump{animation:bump .35s ease}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.15)}100%{transform:scale(1)}}
+.counter-label{font-size:1rem;color:var(--text2);margin-top:8px;font-weight:500}
+
+/* ── Subtle dot grid background ── */
+.lobby::before{
+  content:'';position:absolute;inset:0;z-index:-1;
+  background-image:radial-gradient(circle,#ffffff06 1px,transparent 1px);
+  background-size:32px 32px;
+}
+
+/* ── Question Screen ── */
+.question-screen{display:none;height:100vh;flex-direction:column}
+.q-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:24px 48px;
+}
+.q-counter{font-size:1rem;color:var(--text2);font-weight:600}
+.header-right{display:flex;align-items:center;gap:20px}
+.answer-counter{font-size:.9rem;color:var(--text2);font-weight:500}
+.timer-circle{
+  width:64px;height:64px;border-radius:50%;
+  border:3px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.8rem;font-weight:800;
+  transition:border-color .3s,color .3s;
+}
+.timer-circle.urgent{border-color:var(--red);color:var(--red)}
+
+.q-body{flex:1;display:flex;align-items:center;justify-content:center;padding:20px 80px}
+.q-text{
+  font-size:2.8rem;font-weight:800;text-align:center;
+  line-height:1.25;letter-spacing:-.5px;
+  max-width:900px;
+}
+
+.answer-options{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.option{
+  padding:32px 48px;display:flex;align-items:center;gap:18px;
+  font-size:1.4rem;font-weight:600;
+  transition:opacity .5s,filter .5s;
+}
+.option .shape{
+  width:36px;height:36px;border-radius:8px;
+  background:rgba(255,255,255,.12);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:1rem;flex-shrink:0;
+}
+.opt-a{background:var(--red)}.opt-b{background:var(--blue)}
+.opt-c{background:var(--amber)}.opt-d{background:var(--green)}
+
+.option.correct-highlight{
+  outline:4px solid #fff;position:relative;z-index:1;
+  box-shadow:0 0 30px rgba(255,255,255,.15);
+}
+.option.wrong-dim{opacity:.18;filter:grayscale(.6)}
+
+/* ── Final Screen ── */
+.final-screen{display:none;height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:40px;position:relative;z-index:1}
+.final-screen h1{font-size:3rem;font-weight:900;letter-spacing:-1px;margin-bottom:40px}
+
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:12px;margin-bottom:40px}
+.podium-place{
+  text-align:center;border-radius:12px 12px 0 0;
+  padding:20px 28px 16px;min-width:150px;
+  background:var(--surface);border:1px solid var(--border);border-bottom:none;
+  animation:podiumRise .7s cubic-bezier(.17,.67,.35,1.1) both;
+}
+.podium-place.p1{height:200px;order:2;animation-delay:.5s;border-color:#f1c40f33}
+.podium-place.p2{height:155px;order:1;animation-delay:.25s;border-color:#bdc3c733}
+.podium-place.p3{height:115px;order:3;animation-delay:.75s;border-color:#e67e2233}
+@keyframes podiumRise{from{transform:scaleY(0);opacity:0}to{transform:scaleY(1);opacity:1}}
+.podium-rank{font-size:2rem;margin-bottom:4px}
+.podium-name{font-size:1.1rem;font-weight:700}
+.podium-class{font-size:.85rem;color:var(--text2);margin-top:2px}
+.podium-score{font-size:1.3rem;font-weight:800;margin-top:6px}
+
+.results-container{display:flex;gap:48px;align-items:flex-start}
+.result-section h2{font-size:1rem;font-weight:700;color:var(--text2);margin-bottom:12px;text-align:center;text-transform:uppercase;letter-spacing:1px;font-size:.8rem}
+table{border-collapse:collapse;min-width:300px}
+th,td{padding:10px 18px;text-align:left}
+th{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);border-bottom:1px solid var(--border)}
+td{font-size:1.05rem;border-bottom:1px solid var(--surface2)}
+.rank-1 td{color:#f1c40f;font-weight:700;font-size:1.15rem}
+.rank-2 td{color:#bdc3c7;font-weight:600}
+.rank-3 td{color:#e67e22;font-weight:600}
+
+/* ── Confetti ── */
+.confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+
+<div class="lobby" id="lobby">
+  <div class="lobby-mark">Q</div>
+  <h1>Quiz ZS8</h1>
+  <p class="sub">Oczekiwanie na uczestników...</p>
+  <div class="counter" id="lobby-count">0</div>
+  <p class="counter-label">graczy dołączyło</p>
+</div>
+
+<div class="question-screen" id="question-screen">
+  <div class="q-header">
+    <span class="q-counter">Pytanie <span id="q-num">1</span> / <span id="q-total">15</span></span>
+    <div class="header-right">
+      <span class="answer-counter"><span id="ans-count">0</span>/<span id="ans-total">0</span> odpowiedzi</span>
+      <div class="timer-circle" id="timer-circle">20</div>
+    </div>
+  </div>
+  <div class="q-body">
+    <div class="q-text" id="q-text"></div>
+  </div>
+  <div class="answer-options" id="answer-options">
+    <div class="option opt-a" id="opt-a"><div class="shape">A</div><span id="opt-a-text"></span></div>
+    <div class="option opt-b" id="opt-b"><div class="shape">B</div><span id="opt-b-text"></span></div>
+    <div class="option opt-c" id="opt-c"><div class="shape">C</div><span id="opt-c-text"></span></div>
+    <div class="option opt-d" id="opt-d"><div class="shape">D</div><span id="opt-d-text"></span></div>
+  </div>
+</div>
+
+<div class="final-screen" id="final-screen">
+  <h1>Wyniki quizu</h1>
+  <div class="podium" id="podium"></div>
+  <div class="results-container">
+    <div class="result-section">
+      <h2>Top 5 uczniów</h2>
+      <table id="top5-table"><thead><tr><th>#</th><th>Imię</th><th>Klasa</th><th>Punkty</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="result-section">
+      <h2>Top 3 klasy</h2>
+      <table id="top3-table"><thead><tr><th>#</th><th>Klasa</th><th>Łącznie</th><th>Uczniów</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+let timerInterval = null;
+
+socket.emit('screen-join');
+
+function launchConfetti() {
+  const canvas = document.createElement('canvas');
+  canvas.className = 'confetti-canvas';
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const pieces = [];
+  const colors = ['#e74c3c','#f1c40f','#27ae60','#3498db','#6c5ce7','#e8e6f0'];
+  for (let i = 0; i < 120; i++) {
+    pieces.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height - canvas.height,
+      w: Math.random() * 8 + 4,
+      h: Math.random() * 5 + 2,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      vx: (Math.random() - .5) * 3,
+      vy: Math.random() * 2.5 + 1.5,
+      rot: Math.random() * 360,
+      rv: (Math.random() - .5) * 6,
+    });
+  }
+  let frame = 0;
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    for (const p of pieces) {
+      p.x += p.vx; p.y += p.vy; p.rot += p.rv; p.vy += .04;
+      if (p.y < canvas.height + 50) alive = true;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = Math.max(0, 1 - frame / 280);
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    }
+    frame++;
+    if (alive && frame < 280) requestAnimationFrame(animate);
+    else canvas.remove();
+  }
+  animate();
+}
+
+function showOnly(id) {
+  ['lobby','question-screen','final-screen'].forEach(s => document.getElementById(s).style.display = 'none');
+  document.getElementById(id).style.display = 'flex';
+}
+
+socket.on('screen-state', ({ playerCount }) => {
+  document.getElementById('lobby-count').textContent = playerCount;
+});
+
+socket.on('player-count', ({ count }) => {
+  const c = document.getElementById('lobby-count');
+  c.textContent = count;
+  c.classList.remove('bump');
+  void c.offsetWidth;
+  c.classList.add('bump');
+  document.getElementById('ans-total').textContent = count;
+});
+
+socket.on('show-question', ({ index, total, question, a, b, c, d, time }) => {
+  showOnly('question-screen');
+  document.getElementById('q-num').textContent = index + 1;
+  document.getElementById('q-total').textContent = total;
+  document.getElementById('q-text').textContent = question;
+  document.getElementById('opt-a-text').textContent = a;
+  document.getElementById('opt-b-text').textContent = b;
+  document.getElementById('opt-c-text').textContent = c;
+  document.getElementById('opt-d-text').textContent = d;
+  document.getElementById('ans-count').textContent = '0';
+
+  ['opt-a','opt-b','opt-c','opt-d'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('correct-highlight','wrong-dim');
+    el.style.opacity = '';
+    el.style.filter = '';
+  });
+
+  const circle = document.getElementById('timer-circle');
+  circle.classList.remove('urgent');
+  let remaining = Math.ceil(time);
+  circle.textContent = remaining;
+  if (timerInterval) clearInterval(timerInterval);
+  const start = Date.now();
+  timerInterval = setInterval(() => {
+    const elapsed = (Date.now() - start) / 1000;
+    remaining = Math.max(0, Math.ceil(time - elapsed));
+    circle.textContent = remaining;
+    if (remaining <= 5) circle.classList.add('urgent');
+    if (remaining <= 0) clearInterval(timerInterval);
+  }, 250);
+});
+
+socket.on('answer-count', ({ count, total }) => {
+  document.getElementById('ans-count').textContent = count;
+  document.getElementById('ans-total').textContent = total;
+});
+
+socket.on('reveal-answer', ({ correct, distribution }) => {
+  if (timerInterval) clearInterval(timerInterval);
+  ['a','b','c','d'].forEach(letter => {
+    const el = document.getElementById('opt-' + letter);
+    if (letter === correct) el.classList.add('correct-highlight');
+    else el.classList.add('wrong-dim');
+  });
+});
+
+socket.on('final-results', ({ top5, top3classes }) => {
+  showOnly('final-screen');
+  launchConfetti();
+  setTimeout(launchConfetti, 1200);
+
+  const podium = document.getElementById('podium');
+  podium.innerHTML = '';
+  const medals = ['\u{1F947}','\u{1F948}','\u{1F949}'];
+  top5.slice(0, 3).forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'podium-place p' + (i + 1);
+    div.innerHTML = '<div class="podium-rank">' + medals[i] + '</div>'
+      + '<div class="podium-name">' + esc(p.name) + '</div>'
+      + '<div class="podium-class">' + esc(p.class) + '</div>'
+      + '<div class="podium-score">' + p.score + ' pkt</div>';
+    podium.appendChild(div);
+  });
+
+  const t5 = document.querySelector('#top5-table tbody');
+  t5.innerHTML = '';
+  top5.forEach(p => {
+    t5.innerHTML += '<tr class="rank-' + p.rank + '"><td>' + p.rank + '</td><td>' + esc(p.name) + '</td><td>' + esc(p.class) + '</td><td>' + p.score + '</td></tr>';
+  });
+
+  const t3 = document.querySelector('#top3-table tbody');
+  t3.innerHTML = '';
+  top3classes.forEach(c => {
+    t3.innerHTML += '<tr class="rank-' + c.rank + '"><td>' + c.rank + '</td><td>' + esc(c.name) + '</td><td>' + c.totalScore + '</td><td>' + c.count + '</td></tr>';
+  });
+});
+
+socket.on('quiz-reset', () => showOnly('lobby'));
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+</script>
+</body>
+</html>

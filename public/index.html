@@ -1,0 +1,291 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Quiz ZS8</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0e0e12;
+  --surface:#1a1a22;
+  --surface2:#24242e;
+  --border:#2e2e3a;
+  --text:#e8e6f0;
+  --text2:#88879a;
+  --accent:#6c5ce7;
+  --accent-soft:#6c5ce722;
+  --red:#e74c3c;
+  --blue:#3498db;
+  --amber:#f39c12;
+  --green:#27ae60;
+  --correct:#2ecc71;
+  --wrong:#e74c3c;
+}
+html,body{height:100%}
+body{
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;align-items:center;justify-content:center;
+  min-height:100dvh;overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+.container{width:100%;max-width:380px;padding:24px}
+.brand{text-align:center;margin-bottom:36px}
+.brand-mark{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:56px;height:56px;border-radius:14px;
+  background:var(--accent);
+  font-size:1.5rem;font-weight:800;color:#fff;
+  margin-bottom:14px;letter-spacing:-1px;
+}
+.brand h1{font-size:1.5rem;font-weight:800;letter-spacing:-.5px;color:var(--text)}
+.brand p{font-size:.875rem;color:var(--text2);margin-top:4px}
+
+.join-form{display:flex;flex-direction:column;gap:10px}
+.field label{
+  display:block;font-size:.75rem;font-weight:600;
+  color:var(--text2);margin-bottom:5px;
+  text-transform:uppercase;letter-spacing:.5px;
+}
+.field input{
+  width:100%;padding:13px 14px;
+  border:1.5px solid var(--border);border-radius:10px;
+  background:var(--surface);color:var(--text);
+  font-family:inherit;font-size:.95rem;
+  outline:none;transition:border-color .2s,box-shadow .2s;
+}
+.field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.field input::placeholder{color:var(--text2);opacity:.6}
+
+.btn-join{
+  margin-top:6px;width:100%;padding:14px;
+  border:none;border-radius:10px;
+  background:var(--accent);color:#fff;
+  font-family:inherit;font-size:1rem;font-weight:700;
+  cursor:pointer;transition:background .15s,transform .1s;
+}
+.btn-join:hover{background:#5b4bd6}
+.btn-join:active{transform:scale(.98)}
+
+#error-msg{text-align:center;font-size:.85rem;color:var(--red);margin-top:12px;display:none}
+
+.waiting{display:none;text-align:center;padding:24px}
+.waiting-icon{
+  width:56px;height:56px;margin:0 auto 20px;
+  border:3px solid var(--border);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.waiting h2{font-size:1.3rem;font-weight:700;margin-bottom:6px}
+.waiting p{font-size:.9rem;color:var(--text2)}
+
+.answers{display:none;width:100%;max-width:440px;padding:16px}
+.q-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;font-size:.8rem;color:var(--text2);font-weight:500;
+}
+.timer-track{height:4px;background:var(--surface2);border-radius:2px;margin-bottom:20px;overflow:hidden}
+.timer-track .fill{height:100%;border-radius:2px;background:var(--accent);transition:width .4s linear}
+.timer-track .fill.low{background:var(--red)}
+
+.answer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.answer-btn{
+  padding:22px 14px;border:2px solid transparent;border-radius:12px;
+  font-family:inherit;font-size:1.05rem;font-weight:700;
+  color:#fff;cursor:pointer;
+  transition:transform .1s,opacity .15s,border-color .15s;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.answer-btn:active{transform:scale(.95)}
+.answer-btn .lbl{font-size:.7rem;font-weight:600;opacity:.7;text-transform:uppercase;letter-spacing:1px}
+.answer-btn.a-btn{background:var(--red)}
+.answer-btn.b-btn{background:var(--blue)}
+.answer-btn.c-btn{background:var(--amber)}
+.answer-btn.d-btn{background:var(--green)}
+.answer-btn.selected{border-color:#fff;transform:scale(.96)}
+.answer-btn.disabled{opacity:.45;pointer-events:none}
+
+.result-screen{display:none;text-align:center;padding:40px 24px}
+.result-badge{
+  width:80px;height:80px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:2.2rem;margin-bottom:16px;
+}
+.result-badge.correct{background:#2ecc7118;border:2px solid var(--correct)}
+.result-badge.wrong{background:#e74c3c18;border:2px solid var(--wrong)}
+.result-label{font-size:1.3rem;font-weight:700}
+.result-label.correct{color:var(--correct)}
+.result-label.wrong{color:var(--wrong)}
+
+.final{display:none;text-align:center;width:100%;max-width:520px;padding:20px;overflow-y:auto;max-height:100dvh}
+.final-title{font-size:1.6rem;font-weight:800;margin-bottom:24px;letter-spacing:-.5px}
+.section-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin:24px 0 10px}
+.final table{width:100%;border-collapse:collapse}
+.final th{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.final td{padding:10px;text-align:left;font-size:.95rem;border-bottom:1px solid var(--surface2)}
+.final tr.gold td{color:#f1c40f;font-weight:700}
+.final tr.silver td{color:#bdc3c7;font-weight:600}
+.final tr.bronze td{color:#e67e22;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="container" id="join-screen">
+  <div class="brand">
+    <div class="brand-mark">Q</div>
+    <h1>Quiz ZS8</h1>
+    <p>Wpisz swoje dane i dołącz do gry</p>
+  </div>
+  <form class="join-form" id="join-form">
+    <div class="field">
+      <label for="name">Imię i nazwisko</label>
+      <input type="text" id="name" placeholder="Jan Kowalski" maxlength="40" required autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="playerClass">Klasa</label>
+      <input type="text" id="playerClass" placeholder="np. 3A" maxlength="20" required autocomplete="off">
+    </div>
+    <button type="submit" class="btn-join">Dołącz do quizu</button>
+  </form>
+  <p id="error-msg"></p>
+</div>
+
+<div class="waiting" id="waiting-screen">
+  <div class="waiting-icon"></div>
+  <h2>Jesteś w grze</h2>
+  <p>Czekaj, aż prowadzący rozpocznie quiz...</p>
+</div>
+
+<div class="answers" id="answer-screen">
+  <div class="q-bar">
+    <span>Pytanie <span id="q-num"></span> / <span id="q-total"></span></span>
+  </div>
+  <div class="timer-track"><div class="fill" id="timer-fill"></div></div>
+  <div class="answer-grid">
+    <button class="answer-btn a-btn" data-ans="a"><span class="lbl">A</span><span class="text" id="ans-a"></span></button>
+    <button class="answer-btn b-btn" data-ans="b"><span class="lbl">B</span><span class="text" id="ans-b"></span></button>
+    <button class="answer-btn c-btn" data-ans="c"><span class="lbl">C</span><span class="text" id="ans-c"></span></button>
+    <button class="answer-btn d-btn" data-ans="d"><span class="lbl">D</span><span class="text" id="ans-d"></span></button>
+  </div>
+</div>
+
+<div class="result-screen" id="result-screen">
+  <div class="result-badge" id="result-badge"></div>
+  <p class="result-label" id="result-text"></p>
+</div>
+
+<div class="final" id="final-screen">
+  <p class="final-title">Wyniki quizu</p>
+  <p class="section-label">Top 5 uczniów</p>
+  <table id="top5-table"><thead><tr><th>#</th><th>Imię</th><th>Klasa</th><th>Pkt</th></tr></thead><tbody></tbody></table>
+  <p class="section-label">Top 3 klasy</p>
+  <table id="top3-table"><thead><tr><th>#</th><th>Klasa</th><th>Łącznie</th><th>Uczniów</th></tr></thead><tbody></tbody></table>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+let timerInterval = null;
+
+function showOnly(id) {
+  ['join-screen','waiting-screen','answer-screen','result-screen','final-screen'].forEach(s => {
+    document.getElementById(s).style.display = 'none';
+  });
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  if (id === 'answer-screen' || id === 'final-screen') el.style.margin = '0 auto';
+}
+
+document.getElementById('join-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = document.getElementById('name').value.trim();
+  const playerClass = document.getElementById('playerClass').value.trim();
+  if (!name || !playerClass) return;
+  socket.emit('join', { name, playerClass });
+});
+
+socket.on('joined', () => showOnly('waiting-screen'));
+
+socket.on('show-answers', ({ index, total, a, b, c, d, time }) => {
+  showOnly('answer-screen');
+  document.getElementById('q-num').textContent = index + 1;
+  document.getElementById('q-total').textContent = total;
+  document.getElementById('ans-a').textContent = a;
+  document.getElementById('ans-b').textContent = b;
+  document.getElementById('ans-c').textContent = c;
+  document.getElementById('ans-d').textContent = d;
+
+  document.querySelectorAll('.answer-btn').forEach(btn => {
+    btn.classList.remove('selected', 'disabled');
+    btn.disabled = false;
+  });
+
+  const fill = document.getElementById('timer-fill');
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+  fill.classList.remove('low');
+  if (timerInterval) clearInterval(timerInterval);
+  const startTime = Date.now();
+  const duration = time * 1000;
+  timerInterval = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const pct = Math.max(0, 100 - (elapsed / duration) * 100);
+    fill.style.transition = 'none';
+    fill.style.width = pct + '%';
+    if (pct < 25) fill.classList.add('low');
+    if (pct <= 0) clearInterval(timerInterval);
+  }, 80);
+});
+
+document.querySelectorAll('.answer-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    socket.emit('answer', { answer: btn.dataset.ans });
+  });
+});
+
+socket.on('answer-locked', ({ answer }) => {
+  document.querySelectorAll('.answer-btn').forEach(btn => {
+    if (btn.dataset.ans === answer) btn.classList.add('selected');
+    btn.classList.add('disabled');
+    btn.disabled = true;
+  });
+});
+
+socket.on('answer-result', ({ correct }) => {
+  if (timerInterval) clearInterval(timerInterval);
+  showOnly('result-screen');
+  const badge = document.getElementById('result-badge');
+  const label = document.getElementById('result-text');
+  badge.className = 'result-badge ' + (correct ? 'correct' : 'wrong');
+  badge.textContent = correct ? String.fromCharCode(10003) : String.fromCharCode(10007);
+  label.className = 'result-label ' + (correct ? 'correct' : 'wrong');
+  label.textContent = correct ? 'Dobrze!' : 'Niestety, źle';
+});
+
+socket.on('final-results', ({ top5, top3classes }) => {
+  showOnly('final-screen');
+  const t5 = document.querySelector('#top5-table tbody');
+  t5.innerHTML = '';
+  top5.forEach(p => {
+    const cls = p.rank === 1 ? 'gold' : p.rank === 2 ? 'silver' : p.rank === 3 ? 'bronze' : '';
+    t5.innerHTML += '<tr class="'+cls+'"><td>'+p.rank+'</td><td>'+esc(p.name)+'</td><td>'+esc(p.class)+'</td><td>'+p.score+'</td></tr>';
+  });
+  const t3 = document.querySelector('#top3-table tbody');
+  t3.innerHTML = '';
+  top3classes.forEach(c => {
+    const cls = c.rank === 1 ? 'gold' : c.rank === 2 ? 'silver' : c.rank === 3 ? 'bronze' : '';
+    t3.innerHTML += '<tr class="'+cls+'"><td>'+c.rank+'</td><td>'+esc(c.name)+'</td><td>'+c.totalScore+'</td><td>'+c.count+'</td></tr>';
+  });
+});
+
+socket.on('quiz-reset', () => showOnly('waiting-screen'));
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+</script>
+</body>
+</html>
