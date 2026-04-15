@@ -1,0 +1,22 @@
+URUCHOMIENIE QUIZU
+CO OTWORZYC NA CZYM
+===================
+
+Rzutnik / duzy ekran:
+   zs8-quiz.kijmoshi.xyz/screen
+
+Telefony uczniow:
+   zs8-quiz.kijmoshi.xyz
+
+Komputer nauczyciela (panel admina):
+   zs8-quiz.kijmoshi.xyz/admin
+   Haslo: admin123
+
+
+KOLEJNOSC DZIALAN (nauczyciel)
+==============================
+
+1. Otworz /admin i wpisz haslo
+2. Wlacz Autoplay
+3. Kliknij Start
+4. Quiz dziala automatycznie az do wynikow

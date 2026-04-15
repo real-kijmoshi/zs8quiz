@@ -137,7 +137,7 @@ body{
 
 <div class="container" id="join-screen">
   <div class="brand">
-    <div class="brand-mark">Q</div>
+    <img src="/logo.png" alt="Quiz ZS8" class="brand-mark">
     <h1>Quiz ZS8</h1>
     <p>Wpisz swoje dane i dołącz do gry</p>
   </div>
@@ -181,11 +181,13 @@ body{
 
 <div class="final" id="final-screen">
   <p class="final-title">Wyniki quizu</p>
-  <p class="section-label">Top 5 uczniów</p>
-  <table id="top5-table"><thead><tr><th>#</th><th>Imię</th><th>Klasa</th><th>Pkt</th></tr></thead><tbody></tbody></table>
   <p class="section-label">Top 3 klasy</p>
   <table id="top3-table"><thead><tr><th>#</th><th>Klasa</th><th>Łącznie</th><th>Uczniów</th></tr></thead><tbody></tbody></table>
 </div>
+
+<span style="position:fixed;bottom:8px;left:50%;transform:translateX(-50%);font-size:.75rem;color:var(--text2);">
+  &copy; 2026 kijmoshi.xyz
+</span>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
@@ -194,19 +196,30 @@ let timerInterval = null;
 
 function showOnly(id) {
   ['join-screen','waiting-screen','answer-screen','result-screen','final-screen'].forEach(s => {
-    document.getElementById(s).style.display = 'none';
+    const el = document.getElementById(s);
+    if (el) el.style.display = 'none';
   });
   const el = document.getElementById(id);
+  if (!el) return;
   el.style.display = 'block';
   if (id === 'answer-screen' || id === 'final-screen') el.style.margin = '0 auto';
 }
 
+let storedName = '', storedClass = '';
+
 document.getElementById('join-form').addEventListener('submit', (e) => {
   e.preventDefault();
-  const name = document.getElementById('name').value.trim();
-  const playerClass = document.getElementById('playerClass').value.trim();
-  if (!name || !playerClass) return;
-  socket.emit('join', { name, playerClass });
+  storedName = document.getElementById('name').value.trim();
+  storedClass = document.getElementById('playerClass').value.trim();
+  if (!storedName || !storedClass) return;
+  socket.emit('join', { name: storedName, playerClass: storedClass });
+});
+
+// Auto-rejoin on reconnect (e.g. after brief network drop or server restart)
+socket.on('connect', () => {
+  if (storedName && storedClass) {
+    socket.emit('join', { name: storedName, playerClass: storedClass });
+  }
 });
 
 socket.on('joined', () => showOnly('waiting-screen'));
@@ -267,17 +280,12 @@ socket.on('answer-result', ({ correct }) => {
   label.textContent = correct ? 'Dobrze!' : 'Niestety, źle';
 });
 
-socket.on('final-results', ({ top5, top3classes }) => {
+socket.on('final-results', ({ top5, top3classes } = {}) => {
   showOnly('final-screen');
-  const t5 = document.querySelector('#top5-table tbody');
-  t5.innerHTML = '';
-  top5.forEach(p => {
-    const cls = p.rank === 1 ? 'gold' : p.rank === 2 ? 'silver' : p.rank === 3 ? 'bronze' : '';
-    t5.innerHTML += '<tr class="'+cls+'"><td>'+p.rank+'</td><td>'+esc(p.name)+'</td><td>'+esc(p.class)+'</td><td>'+p.score+'</td></tr>';
-  });
   const t3 = document.querySelector('#top3-table tbody');
+  if (!t3) return;
   t3.innerHTML = '';
-  top3classes.forEach(c => {
+  (Array.isArray(top3classes) ? top3classes : []).forEach(c => {
     const cls = c.rank === 1 ? 'gold' : c.rank === 2 ? 'silver' : c.rank === 3 ? 'bronze' : '';
     t3.innerHTML += '<tr class="'+cls+'"><td>'+c.rank+'</td><td>'+esc(c.name)+'</td><td>'+c.totalScore+'</td><td>'+c.count+'</td></tr>';
   });

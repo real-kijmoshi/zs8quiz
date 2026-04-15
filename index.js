@@ -7,13 +7,25 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { maxHttpBufferSize: 1e6, pingTimeout: 60000, pingInterval: 25000 });
 
+// Keep Node alive on unhandled errors — a single bad event must never kill the server
+process.on("uncaughtException", (err) => console.error("[uncaughtException]", err));
+process.on("unhandledRejection", (reason) => console.error("[unhandledRejection]", reason));
+
+// Wrap socket event callbacks so any error is caught and logged instead of crashing
+function safe(fn) {
+  return function (...args) {
+    try { fn(...args); } catch (e) { console.error("[safe] handler error:", e); }
+  };
+}
+
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 
 // ── CONFIG ──
 const ADMIN_PASSWORD = "admin123";
+const SERVER_URL = "https://zs8-quiz.kijmoshi.xyz"; // Change to your server's URL or IP
+const REDIRECT_URL = `bit.ly/zs8-quiz`; // Short URL for easy sharing (optional)
 const QUESTIONS = [
-[
   { q: "Jaki jest styl architektoniczny budynku naszej szkoły?", a: "Gotycki", b: "Neogotycki", c: "Modernistyczny", d: "Barokowy", correct: "b" },
 
   { q: "Jaki numer miało gimnazjum, które istniało przed ZS8?", a: "11", b: "7", c: "13", d: "21", correct: "c" },
@@ -33,8 +45,8 @@ const QUESTIONS = [
   { q: "Jaki jest numer sali biologicznej (tej ze zwierzętami)?", a: "18", b: "21", c: "15", d: "24", correct: "b" },
 
   { q: "Kto należy do dyrekcji szkoły?", a: "T. Fulara, E. Sojka, K. Nowak", b: "A. Wyczlińska, M. Lechociński, K. Szczepański", c: "M. Tokarek, J. Gajek, A. Jagucka", d: "K. Ignaszewska, B. Lewczuk, E. Liszewska", correct: "b" }
-]];
-const TIME_PER_QUESTION = 20; // seconds
+];
+const TIME_PER_QUESTION = 30; // seconds
 
 // ── STATE ──
 let players = new Map(); // socketId -> { name, class, score, answers[] }
@@ -93,6 +105,10 @@ function answerDistribution() {
 }
 
 function sendQuestion() {
+  if (currentQuestion < 0 || currentQuestion >= QUESTIONS.length) {
+    console.error("[sendQuestion] invalid currentQuestion:", currentQuestion);
+    return;
+  }
   const q = QUESTIONS[currentQuestion];
   questionStartTime = Date.now();
   gameState = "question";
@@ -119,6 +135,10 @@ function sendQuestion() {
 
 function revealAnswer() {
   if (questionTimer) { clearTimeout(questionTimer); questionTimer = null; }
+  if (currentQuestion < 0 || currentQuestion >= QUESTIONS.length) {
+    console.error("[revealAnswer] invalid currentQuestion:", currentQuestion);
+    return;
+  }
   gameState = "reveal";
   const q = QUESTIONS[currentQuestion];
 
@@ -158,13 +178,16 @@ function revealAnswer() {
 
 function showFinalResults() {
   gameState = "finished";
-  const results = { top5: getTop5(), top3classes: getTop3Classes() };
+  const top5 = getTop5();
+  const top3classes = getTop3Classes();
+  const results = { top5, top3classes };
 
-  // Send personal scores to each player
+  // Send leaderboard + personal scores to each player
   for (const [sid, player] of players) {
     io.to(sid).emit("final-results", {
+      ...results,
       personalScore: player.score,
-      rank: getTop5().findIndex(p => p.name === player.name) + 1 || null, // Find rank if in top 5
+      rank: top5.findIndex(p => p.name === player.name) + 1 || null,
     });
   }
 
@@ -175,19 +198,24 @@ function showFinalResults() {
 // ── SOCKET.IO ──
 io.on("connection", (socket) => {
   // Player joins
-  socket.on("join", ({ name, playerClass }) => {
+  socket.on("join", safe(({ name, playerClass } = {}) => {
     if (!name || !playerClass || typeof name !== "string" || typeof playerClass !== "string") return;
     name = name.trim().slice(0, 40);
     playerClass = playerClass.trim().slice(0, 20);
     if (!name || !playerClass) return;
 
-    players.set(socket.id, { name, class: playerClass, score: 0, answers: [] });
+    function normalizeClassName(className) {
+      return className.trim().toLowerCase().replace(/\s+/g, "").replace(/^(\d+)([a-z])$/i, (_, num, letter) => `${num}${letter.toLowerCase()}`);
+    }
+
+    const normalizedClass = normalizeClassName(playerClass);
+    players.set(socket.id, { name, class: normalizedClass, score: 0, answers: [] });
     socket.join("players");
     socket.emit("joined", { state: gameState, playerCount: players.size });
     io.to("screens").emit("player-count", { count: players.size });
     io.to("admins").emit("player-count", { count: players.size, players: getPlayerList() });
 
-    // If game already in progress, send current state
+    // If game already in progress, sync the late joiner to current state
     if (gameState === "question") {
       const q = QUESTIONS[currentQuestion];
       const elapsed = (Date.now() - questionStartTime) / 1000;
@@ -196,11 +224,17 @@ io.on("connection", (socket) => {
         index: currentQuestion, total: QUESTIONS.length,
         a: q.a, b: q.b, c: q.c, d: q.d, time: remaining,
       });
+    } else if (gameState === "reveal") {
+      // Joined too late to answer — show result screen with wrong
+      const q = QUESTIONS[currentQuestion];
+      socket.emit("answer-result", { correct: false, correctAnswer: q.correct, yourAnswer: null });
+    } else if (gameState === "finished") {
+      socket.emit("final-results", { top5: getTop5(), top3classes: getTop3Classes() });
     }
-  });
+  }));
 
   // Player answers
-  socket.on("answer", ({ answer }) => {
+  socket.on("answer", safe(({ answer } = {}) => {
     if (gameState !== "question") return;
     if (!["a", "b", "c", "d"].includes(answer)) return;
     const player = players.get(socket.id);
@@ -209,10 +243,11 @@ io.on("connection", (socket) => {
 
     player.answers[currentQuestion] = answer;
     const q = QUESTIONS[currentQuestion];
+    if (!q) return;
     if (answer === q.correct) {
       const elapsed = (Date.now() - questionStartTime) / 1000;
-      const timeBonus = Math.max(0, Math.round((1 - elapsed / TIME_PER_QUESTION) * 30)); // Adjusted time bonus
-      player.score += 30 + timeBonus; // Adjusted base score and total score per question
+      const timeBonus = Math.max(0, Math.round((1 - elapsed / TIME_PER_QUESTION) * 30));
+      player.score += 30 + timeBonus;
     }
 
     socket.emit("answer-locked", { answer });
@@ -224,33 +259,58 @@ io.on("connection", (socket) => {
     if (autoplay && cnt >= players.size && players.size > 0) {
       revealAnswer();
     }
-  });
+  }));
 
   // Admin auth
-  socket.on("admin-login", ({ password }) => {
+  socket.on("admin-login", safe(({ password } = {}) => {
     if (password === ADMIN_PASSWORD) {
       socket.join("admins");
       socket.emit("admin-ok", { state: gameState, questionIndex: currentQuestion, playerCount: players.size, totalQuestions: QUESTIONS.length, autoplay });
     } else {
       socket.emit("admin-fail");
     }
-  });
+  }));
 
   // Screen joins
-  socket.on("screen-join", () => {
+  socket.on("screen-join", safe(() => {
     socket.join("screens");
-    socket.emit("screen-state", { state: gameState, playerCount: players.size });
-  });
+    socket.emit("screen-state", { state: gameState, playerCount: players.size, joinUrl: REDIRECT_URL });
+
+    if (gameState === "question") {
+      const q = QUESTIONS[currentQuestion];
+      const elapsed = (Date.now() - questionStartTime) / 1000;
+      const remaining = Math.max(0, TIME_PER_QUESTION - elapsed);
+      socket.emit("show-question", {
+        index: currentQuestion, total: QUESTIONS.length,
+        question: q.q, a: q.a, b: q.b, c: q.c, d: q.d,
+        time: remaining,
+      });
+    } else if (gameState === "reveal") {
+      const q = QUESTIONS[currentQuestion];
+      socket.emit("show-question", {
+        index: currentQuestion, total: QUESTIONS.length,
+        question: q.q, a: q.a, b: q.b, c: q.c, d: q.d,
+        time: 0,
+      });
+      socket.emit("reveal-answer", {
+        correct: q.correct,
+        distribution: answerDistribution(),
+        correctText: q[q.correct],
+      });
+    } else if (gameState === "finished") {
+      socket.emit("final-results", { top5: getTop5(), top3classes: getTop3Classes() });
+    }
+  }));
 
   // Admin controls
-  socket.on("start-quiz", () => {
+  socket.on("start-quiz", safe(() => {
     if (!socket.rooms.has("admins")) return;
     if (gameState !== "lobby") return;
     currentQuestion = 0;
     sendQuestion();
-  });
+  }));
 
-  socket.on("next-question", () => {
+  socket.on("next-question", safe(() => {
     if (!socket.rooms.has("admins")) return;
     if (gameState !== "reveal") return;
     currentQuestion++;
@@ -259,21 +319,21 @@ io.on("connection", (socket) => {
     } else {
       sendQuestion();
     }
-  });
+  }));
 
-  socket.on("skip-timer", () => {
+  socket.on("skip-timer", safe(() => {
     if (!socket.rooms.has("admins")) return;
     if (gameState !== "question") return;
     revealAnswer();
-  });
+  }));
 
-  socket.on("toggle-autoplay", () => {
+  socket.on("toggle-autoplay", safe(() => {
     if (!socket.rooms.has("admins")) return;
     autoplay = !autoplay;
     io.to("admins").emit("autoplay-state", { autoplay });
-  });
+  }));
 
-  socket.on("reset-quiz", () => {
+  socket.on("reset-quiz", safe(() => {
     if (!socket.rooms.has("admins")) return;
     if (questionTimer) { clearTimeout(questionTimer); questionTimer = null; }
     if (autoplayTimer) { clearTimeout(autoplayTimer); autoplayTimer = null; }
@@ -281,14 +341,14 @@ io.on("connection", (socket) => {
     currentQuestion = -1;
     for (const p of players.values()) { p.score = 0; p.answers = []; }
     io.emit("quiz-reset");
-  });
+  }));
 
   // Disconnect
-  socket.on("disconnect", () => {
+  socket.on("disconnect", safe(() => {
     players.delete(socket.id);
     io.to("screens").emit("player-count", { count: players.size });
     io.to("admins").emit("player-count", { count: players.size, players: getPlayerList() });
-  });
+  }));
 });
 
 const PORT = process.env.PORT || 3000;

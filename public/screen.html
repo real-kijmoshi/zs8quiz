@@ -130,14 +130,15 @@ td{font-size:1.05rem;border-bottom:1px solid var(--surface2)}
 <body>
 
 <div class="lobby" id="lobby">
-  <div class="lobby-mark">Q</div>
+  <img src="/logo.png" alt="Quiz ZS8" class="lobby-mark">
   <h1>Quiz ZS8</h1>
   <p class="sub">Oczekiwanie na uczestników...</p>
+  <div id="join-url" style="font-size:2rem;font-weight:800;letter-spacing:1px;color:#fff;background:var(--accent);padding:14px 32px;border-radius:12px;margin-bottom:32px;display:none"></div>
   <div class="counter" id="lobby-count">0</div>
   <p class="counter-label">graczy dołączyło</p>
 </div>
 
-<div class="question-screen" id="question-screen">
+<div class="question-screen" id="question-screen" style="display:none">
   <div class="q-header">
     <span class="q-counter">Pytanie <span id="q-num">1</span> / <span id="q-total">15</span></span>
     <div class="header-right">
@@ -157,13 +158,14 @@ td{font-size:1.05rem;border-bottom:1px solid var(--surface2)}
 </div>
 
 <div class="final-screen" id="final-screen">
+  <img src="/logo.png" alt="Quiz ZS8" class="final-mark" style="width:100px;height:100px;margin-bottom:24px;">
   <h1>Wyniki quizu</h1>
   <div class="podium" id="podium"></div>
   <div class="results-container">
-    <div class="result-section">
+    <!-- <div class="result-section">
       <h2>Top 5 uczniów</h2>
       <table id="top5-table"><thead><tr><th>#</th><th>Imię</th><th>Klasa</th><th>Punkty</th></tr></thead><tbody></tbody></table>
-    </div>
+    </div> -->
     <div class="result-section">
       <h2>Top 3 klasy</h2>
       <table id="top3-table"><thead><tr><th>#</th><th>Klasa</th><th>Łącznie</th><th>Uczniów</th></tr></thead><tbody></tbody></table>
@@ -171,12 +173,16 @@ td{font-size:1.05rem;border-bottom:1px solid var(--surface2)}
   </div>
 </div>
 
+<span style="position:fixed;bottom:8px;left:50%;transform:translateX(-50%);font-size:.75rem;color:var(--text2);">
+  &copy; 2026 kijmoshi.xyz
+</span>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io();
 let timerInterval = null;
 
-socket.emit('screen-join');
+// Re-emit screen-join on every (re)connect so the screen always gets correct state
+socket.on('connect', () => socket.emit('screen-join'));
 
 function launchConfetti() {
   const canvas = document.createElement('canvas');
@@ -223,12 +229,18 @@ function launchConfetti() {
 }
 
 function showOnly(id) {
-  ['lobby','question-screen','final-screen'].forEach(s => document.getElementById(s).style.display = 'none');
-  document.getElementById(id).style.display = 'flex';
+  ['lobby','question-screen','final-screen'].forEach(s => {
+    const el = document.getElementById(s);
+    if (el) el.style.display = 'none';
+  });
+  const target = document.getElementById(id);
+  if (target) target.style.display = 'flex';
 }
 
-socket.on('screen-state', ({ playerCount }) => {
+socket.on('screen-state', ({ playerCount, joinUrl }) => {
   document.getElementById('lobby-count').textContent = playerCount;
+  const urlEl = document.getElementById('join-url');
+  if (joinUrl) { urlEl.textContent = joinUrl; urlEl.style.display = 'block'; }
 });
 
 socket.on('player-count', ({ count }) => {
@@ -287,35 +299,36 @@ socket.on('reveal-answer', ({ correct, distribution }) => {
   });
 });
 
-socket.on('final-results', ({ top5, top3classes }) => {
+socket.on('final-results', ({ top5, top3classes } = {}) => {
   showOnly('final-screen');
   launchConfetti();
   setTimeout(launchConfetti, 1200);
 
-  const podium = document.getElementById('podium');
-  podium.innerHTML = '';
-  const medals = ['\u{1F947}','\u{1F948}','\u{1F949}'];
-  top5.slice(0, 3).forEach((p, i) => {
-    const div = document.createElement('div');
-    div.className = 'podium-place p' + (i + 1);
-    div.innerHTML = '<div class="podium-rank">' + medals[i] + '</div>'
-      + '<div class="podium-name">' + esc(p.name) + '</div>'
-      + '<div class="podium-class">' + esc(p.class) + '</div>'
-      + '<div class="podium-score">' + p.score + ' pkt</div>';
-    podium.appendChild(div);
-  });
+  const safeTop5 = Array.isArray(top5) ? top5 : [];
+  const safeTop3 = Array.isArray(top3classes) ? top3classes : [];
 
-  const t5 = document.querySelector('#top5-table tbody');
-  t5.innerHTML = '';
-  top5.forEach(p => {
-    t5.innerHTML += '<tr class="rank-' + p.rank + '"><td>' + p.rank + '</td><td>' + esc(p.name) + '</td><td>' + esc(p.class) + '</td><td>' + p.score + '</td></tr>';
-  });
+  const podium = document.getElementById('podium');
+  if (podium) {
+    podium.innerHTML = '';
+    const medals = ['\u{1F947}','\u{1F948}','\u{1F949}'];
+    safeTop5.slice(0, 3).forEach((p, i) => {
+      const div = document.createElement('div');
+      div.className = 'podium-place p' + (i + 1);
+      div.innerHTML = '<div class="podium-rank">' + medals[i] + '</div>'
+        + '<div class="podium-name">' + esc(p.name) + '</div>'
+        + '<div class="podium-class">' + esc(p.class) + '</div>'
+        + '<div class="podium-score">' + p.score + ' pkt</div>';
+      podium.appendChild(div);
+    });
+  }
 
   const t3 = document.querySelector('#top3-table tbody');
-  t3.innerHTML = '';
-  top3classes.forEach(c => {
-    t3.innerHTML += '<tr class="rank-' + c.rank + '"><td>' + c.rank + '</td><td>' + esc(c.name) + '</td><td>' + c.totalScore + '</td><td>' + c.count + '</td></tr>';
-  });
+  if (t3) {
+    t3.innerHTML = '';
+    safeTop3.forEach(c => {
+      t3.innerHTML += '<tr class="rank-' + c.rank + '"><td>' + c.rank + '</td><td>' + esc(c.name) + '</td><td>' + c.totalScore + '</td><td>' + c.count + '</td></tr>';
+    });
+  }
 });
 
 socket.on('quiz-reset', () => showOnly('lobby'));
