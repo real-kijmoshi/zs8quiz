@@ -31,30 +31,23 @@ const QUESTIONS = [
   
   { q: "W którym roku ZS8 rozpoczęło swoją działalność?", a: "2016", b: "2017", c: "2019", d: "2021", correct: "c" },
   
-  { q: "Kto prowadzi szkolny zespół Crossover?", a: "M. Lechociński", b: "T. Fulara", c: "K. Szczepański", d: "A. Gołąbek", correct: "b" },
-  
-  { q: "Jakiego patrona miało Gimnazjum nr 13?", a: "UNESCO", b: "Unia Europejska", c: "Mikołaj Rej", d: "Mikołaj Kopernik", correct: "b" },
-  
-  { q: "Jak nazywa się drużyna DI, która dwa lata temu pojechała do Stanów?", a: "Beta Squad", b: "Gamma Team", c: "Alfa Team", d: "Delta Force", correct: "c" },
+  { q: "Jak nazywa sie druzyna ktora dwokrotnie odniosla sukcess w Ogolnopolskiej Olimpiadzie Krewatynosci.", a: "Beta Squad", b: "Gamma Team", c: "Alfa Team", d: "Delta Force", correct: "c" },
 
   { q: "Kto prowadzi Szkolne Koło Turystyczne Skalnik?", a: "E. Sojka", b: "K. Sojka", c: "T. Fulara", d: "M. Tokarek", correct: "b" },
   
   { q: "W którym roku założono zespół Crossover?", a: "2000", b: "2005", c: "2003", d: "2008", correct: "c" },
   
-  { q: "Jaki jest styl architektoniczny budynku naszej szkoły?", a: "Gotycki", b: "Neogotycki", c: "Modernistyczny", d: "Barokowy", correct: "b" },
+  { q: "w jakim stylu architektonicznnym zbudowano naszą szkołę?", a: "Gotycki", b: "Neogotycki", c: "Modernistyczny", d: "Barokowy", correct: "b" },
 
-  { q: "Jaki jest numer sali biologicznej (tej ze zwierzętami)?", a: "18", b: "21", c: "15", d: "24", correct: "b" },
-
-  { q: "Kto należy do dyrekcji szkoły?", a: "T. Fulara, E. Sojka, K. Nowak", b: "A. Wyczlińska, M. Lechociński, K. Szczepański", c: "M. Tokarek, J. Gajek, A. Jagucka", d: "K. Ignaszewska, B. Lewczuk, E. Liszewska", correct: "b" },
+  { q: "Jaki jest numer sali w ktorej jest najwiecej fauny i flory?", a: "18", b: "21", c: "15", d: "24", correct: "b" },
 
   { q: "Ilu nauczycieli wychowania fizycznego uczy w naszej szkole?", a: "6", b: "7", c: "8", d: "10", correct: "c" },
 
   { q: "Która nauczycielka odpowiada za Szkolny Wolontariat?", a: "M. Rabiej", b: "E. Liszewska", c: "A. Jagucka", d: "B. Motylewska", correct: "a" },
 
   { q: "Jak nazywa się święto obchodzone w naszej szkole 31 października?", a: "Halloween", b: "Dziadoween", c: "Dzień Straszenia", d: "Noc Duchów", correct: "b" },
-
-  { q: "Ile jest gwiazd wiszących między korytarzami?", a: "10", b: "12", c: "14", d: "16", correct: "b" }
-
+  
+  // w ktorym zamontowano ten element + zdj (zegar)
 ];
 const TIME_PER_QUESTION = 30; // seconds
 
