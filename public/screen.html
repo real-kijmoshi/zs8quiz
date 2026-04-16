@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Quiz ZS8 - Ekran</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script><style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --bg:#0e0e12;--surface:#1a1a22;--surface2:#24242e;
@@ -23,22 +22,78 @@ body{
 
 /* ── Lobby ── */
 .lobby{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
   height:100vh;position:relative;z-index:1;
+  gap:0;
+}
+.lobby-topbar{
+  position:absolute;top:0;left:0;right:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 36px;
+}
+.lobby-brand{
+  display:flex;align-items:center;gap:12px;
 }
 .lobby-mark{
-  width:80px;height:80px;border-radius:20px;
-  background:var(--accent);
-  display:flex;align-items:center;justify-content:center;
-  font-size:2.2rem;font-weight:900;color:#fff;
-  margin-bottom:20px;letter-spacing:-2px;
+  width:40px;height:40px;border-radius:10px;
+  overflow:hidden;flex-shrink:0;
 }
-.lobby h1{font-size:2.8rem;font-weight:900;letter-spacing:-1px;margin-bottom:6px}
-.lobby .sub{font-size:1.1rem;color:var(--text2);margin-bottom:40px}
-.counter{font-size:7rem;font-weight:900;letter-spacing:-4px;color:var(--text);line-height:1;transition:transform .2s}
+.lobby-mark img{width:100%;height:100%;object-fit:cover;display:block}
+.lobby h1{font-size:1.3rem;font-weight:800;letter-spacing:-.5px}
+.lobby-status{
+  display:flex;align-items:center;gap:8px;
+  font-size:.9rem;color:var(--text2);font-weight:500;
+}
+.lobby-status::before{
+  content:'';display:inline-block;width:8px;height:8px;
+  border-radius:50%;background:#27ae60;
+  box-shadow:0 0 0 3px rgba(39,174,96,.25);
+  animation:pulse 2s ease infinite;
+}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(39,174,96,.25)}50%{box-shadow:0 0 0 6px rgba(39,174,96,.1)}}
+
+/* center QR block */
+.lobby-center{
+  display:flex;flex-direction:column;align-items:center;gap:24px;
+}
+.qr-wrapper{
+  background:#fff;
+  border-radius:20px;
+  padding:20px;
+  box-shadow:0 32px 80px rgba(0,0,0,.6);
+}
+.qr-wrapper canvas,
+.qr-wrapper img{
+  display:block;
+  width:min(calc(100vh - 260px), 50vw, 640px) !important;
+  height:min(calc(100vh - 260px), 50vw, 640px) !important;
+  border-radius:4px;
+}
+.qr-cta{
+  text-align:center;
+}
+.qr-cta-main{
+  font-size:1.6rem;font-weight:800;letter-spacing:-.5px;
+  color:var(--text);
+}
+.qr-cta-url{
+  font-size:1rem;font-weight:500;color:var(--text2);margin-top:4px;
+}
+
+/* bottom player counter */
+.lobby-bottom{
+  position:absolute;bottom:0;left:0;right:0;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px 36px;gap:10px;
+}
+.counter{
+  font-size:2.2rem;font-weight:900;letter-spacing:-1px;
+  color:var(--text);line-height:1;transition:transform .2s;
+}
 .counter.bump{animation:bump .35s ease}
-@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.15)}100%{transform:scale(1)}}
-.counter-label{font-size:1rem;color:var(--text2);margin-top:8px;font-weight:500}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.12)}100%{transform:scale(1)}}
+.counter-label{font-size:1.1rem;color:var(--text2);font-weight:500}
 
 /* ── Subtle dot grid background ── */
 .lobby::before{
@@ -65,7 +120,8 @@ body{
 }
 .timer-circle.urgent{border-color:var(--red);color:var(--red)}
 
-.q-body{flex:1;display:flex;align-items:center;justify-content:center;padding:20px 80px}
+.q-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 80px;gap:24px}
+.q-media{max-height:280px;max-width:600px;border-radius:12px;object-fit:contain;box-shadow:0 8px 32px rgba(0,0,0,.5);display:none}
 .q-text{
   font-size:2.8rem;font-weight:800;text-align:center;
   line-height:1.25;letter-spacing:-.5px;
@@ -100,28 +156,27 @@ body{
 .podium{display:flex;align-items:flex-end;justify-content:center;gap:12px;margin-bottom:40px}
 .podium-place{
   text-align:center;border-radius:12px 12px 0 0;
-  padding:20px 28px 16px;min-width:150px;
+  padding:14px 22px 12px;min-width:120px;
   background:var(--surface);border:1px solid var(--border);border-bottom:none;
   animation:podiumRise .7s cubic-bezier(.17,.67,.35,1.1) both;
 }
-.podium-place.p1{height:200px;order:2;animation-delay:.5s;border-color:#f1c40f33}
-.podium-place.p2{height:155px;order:1;animation-delay:.25s;border-color:#bdc3c733}
-.podium-place.p3{height:115px;order:3;animation-delay:.75s;border-color:#e67e2233}
+.podium-place.p1{height:150px;order:2;animation-delay:.5s;border-color:#f1c40f33}
+.podium-place.p2{height:115px;order:1;animation-delay:.25s;border-color:#bdc3c733}
+.podium-place.p3{height:88px;order:3;animation-delay:.75s;border-color:#e67e2233}
 @keyframes podiumRise{from{transform:scaleY(0);opacity:0}to{transform:scaleY(1);opacity:1}}
-.podium-rank{font-size:2rem;margin-bottom:4px}
-.podium-name{font-size:1.1rem;font-weight:700}
-.podium-class{font-size:.85rem;color:var(--text2);margin-top:2px}
-.podium-score{font-size:1.3rem;font-weight:800;margin-top:6px}
+.podium-rank{font-size:1.5rem;margin-bottom:4px}
+.podium-name{font-size:.95rem;font-weight:800}
+.podium-score{font-size:.85rem;font-weight:600;color:var(--text2);margin-top:3px}
 
-.results-container{display:flex;gap:48px;align-items:flex-start}
-.result-section h2{font-size:1rem;font-weight:700;color:var(--text2);margin-bottom:12px;text-align:center;text-transform:uppercase;letter-spacing:1px;font-size:.8rem}
-table{border-collapse:collapse;min-width:300px}
-th,td{padding:10px 18px;text-align:left}
-th{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);border-bottom:1px solid var(--border)}
-td{font-size:1.05rem;border-bottom:1px solid var(--surface2)}
-.rank-1 td{color:#f1c40f;font-weight:700;font-size:1.15rem}
-.rank-2 td{color:#bdc3c7;font-weight:600}
-.rank-3 td{color:#e67e22;font-weight:600}
+.final-players{width:100%;max-width:520px}
+.final-players h2{font-size:.65rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;text-align:center}
+.final-players table{width:100%;border-collapse:collapse}
+.final-players th,.final-players td{padding:7px 14px;text-align:left}
+.final-players th{font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);border-bottom:1px solid var(--border)}
+.final-players td{font-size:.92rem;border-bottom:1px solid var(--surface2)}
+.final-players .rank-1 td{color:#f1c40f;font-weight:700}
+.final-players .rank-2 td{color:#bdc3c7;font-weight:600}
+.final-players .rank-3 td{color:#e67e22;font-weight:600}
 
 /* ── Confetti ── */
 .confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10}
@@ -130,12 +185,27 @@ td{font-size:1.05rem;border-bottom:1px solid var(--surface2)}
 <body>
 
 <div class="lobby" id="lobby">
-  <img src="/logo.png" alt="Quiz ZS8" class="lobby-mark">
-  <h1>Quiz ZS8</h1>
-  <p class="sub">Oczekiwanie na uczestników...</p>
-  <div id="join-url" style="font-size:2rem;font-weight:800;letter-spacing:1px;color:#fff;background:var(--accent);padding:14px 32px;border-radius:12px;margin-bottom:32px;display:none"></div>
-  <div class="counter" id="lobby-count">0</div>
-  <p class="counter-label">graczy dołączyło</p>
+  <div class="lobby-topbar">
+    <div class="lobby-brand">
+      <div class="lobby-mark"><img src="/logo.png" alt="Quiz ZS8"></div>
+      <h1>Quiz ZS8</h1>
+    </div>
+    <div class="lobby-status">Oczekiwanie na uczestników...</div>
+  </div>
+
+  <div class="lobby-center">
+    <div class="qr-wrapper" id="qr-wrapper">
+    </div>
+    <div class="qr-cta">
+      <p class="qr-cta-main">Zeskanuj, aby dołączyć</p>
+      <p class="qr-cta-url" id="join-url-text"></p>
+    </div>
+  </div>
+
+  <div class="lobby-bottom">
+    <div class="counter" id="lobby-count">0</div>
+    <p class="counter-label">graczy dołączyło</p>
+  </div>
 </div>
 
 <div class="question-screen" id="question-screen" style="display:none">
@@ -147,6 +217,7 @@ td{font-size:1.05rem;border-bottom:1px solid var(--surface2)}
     </div>
   </div>
   <div class="q-body">
+    <img class="q-media" id="q-media" alt="">
     <div class="q-text" id="q-text"></div>
   </div>
   <div class="answer-options" id="answer-options">
@@ -158,18 +229,12 @@ td{font-size:1.05rem;border-bottom:1px solid var(--surface2)}
 </div>
 
 <div class="final-screen" id="final-screen">
-  <img src="/logo.png" alt="Quiz ZS8" class="final-mark" style="width:100px;height:100px;margin-bottom:24px;">
-  <h1>Wyniki quizu</h1>
+  <img src="/logo.png" alt="Quiz ZS8" class="final-mark" style="width:56px;height:56px;margin-bottom:12px;border-radius:12px;">
+  <h1 style="font-size:2rem;margin-bottom:20px;">Wyniki quizu</h1>
   <div class="podium" id="podium"></div>
-  <div class="results-container">
-    <!-- <div class="result-section">
-      <h2>Top 5 uczniów</h2>
-      <table id="top5-table"><thead><tr><th>#</th><th>Imię</th><th>Klasa</th><th>Punkty</th></tr></thead><tbody></tbody></table>
-    </div> -->
-    <div class="result-section">
-      <h2>Top 3 klasy</h2>
-      <table id="top3-table"><thead><tr><th>#</th><th>Klasa</th><th>Łącznie</th><th>Uczniów</th></tr></thead><tbody></tbody></table>
-    </div>
+  <div class="final-players">
+    <h2>Top 5 graczy</h2>
+    <table id="top5-table"><thead><tr><th>#</th><th>Imię</th><th>Klasa</th><th>Punkty</th></tr></thead><tbody></tbody></table>
   </div>
 </div>
 
@@ -237,10 +302,39 @@ function showOnly(id) {
   if (target) target.style.display = 'flex';
 }
 
+let _qrUrl = '';
+let _qrInstance = null;
+function _qrCanvas(wrapper, joinUrl, px) {
+  wrapper.innerHTML = '';
+  _qrInstance = new QRCode(wrapper, {
+    text: joinUrl,
+    width: px,
+    height: px,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M,
+  });
+}
+function setQR(joinUrl) {
+  const wrapper = document.getElementById('qr-wrapper');
+  if (!wrapper) return;
+  _qrInstance = null;
+  const px = Math.round(Math.min(window.innerHeight - 260, window.innerWidth * 0.5, 640));
+  wrapper.innerHTML = '';
+  const img = document.createElement('img');
+  img.alt = 'QR Code';
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=' + px + 'x' + px + '&qzone=1&data=' + encodeURIComponent(joinUrl);
+  img.onerror = () => { _qrCanvas(wrapper, joinUrl, px); };
+  wrapper.appendChild(img);
+}
+window.addEventListener('resize', () => { if (_qrUrl) setQR(_qrUrl); });
+
 socket.on('screen-state', ({ playerCount, joinUrl }) => {
   document.getElementById('lobby-count').textContent = playerCount;
-  const urlEl = document.getElementById('join-url');
-  if (joinUrl) { urlEl.textContent = joinUrl; urlEl.style.display = 'block'; }
+  _qrUrl = joinUrl;
+  setQR(joinUrl);
+  const urlText = document.getElementById('join-url-text');
+  if (urlText) urlText.textContent = joinUrl.replace(/^https?:\/\//, '');
 });
 
 socket.on('player-count', ({ count }) => {
@@ -252,11 +346,14 @@ socket.on('player-count', ({ count }) => {
   document.getElementById('ans-total').textContent = count;
 });
 
-socket.on('show-question', ({ index, total, question, a, b, c, d, time }) => {
+socket.on('show-question', ({ index, total, question, a, b, c, d, time, media }) => {
   showOnly('question-screen');
   document.getElementById('q-num').textContent = index + 1;
   document.getElementById('q-total').textContent = total;
   document.getElementById('q-text').textContent = question;
+  const mediaEl = document.getElementById('q-media');
+  if (media) { mediaEl.src = '/media/' + media; mediaEl.style.display = 'block'; }
+  else { mediaEl.src = ''; mediaEl.style.display = 'none'; }
   document.getElementById('opt-a-text').textContent = a;
   document.getElementById('opt-b-text').textContent = b;
   document.getElementById('opt-c-text').textContent = c;
@@ -311,22 +408,23 @@ socket.on('final-results', ({ top5, top3classes } = {}) => {
   if (podium) {
     podium.innerHTML = '';
     const medals = ['\u{1F947}','\u{1F948}','\u{1F949}'];
-    safeTop5.slice(0, 3).forEach((p, i) => {
+    safeTop3.slice(0, 3).forEach((c, i) => {
       const div = document.createElement('div');
       div.className = 'podium-place p' + (i + 1);
       div.innerHTML = '<div class="podium-rank">' + medals[i] + '</div>'
-        + '<div class="podium-name">' + esc(p.name) + '</div>'
-        + '<div class="podium-class">' + esc(p.class) + '</div>'
-        + '<div class="podium-score">' + p.score + ' pkt</div>';
+        + '<div class="podium-name">' + esc(c.name) + '</div>'
+        + '<div class="podium-score">' + c.totalScore + ' pkt</div>';
       podium.appendChild(div);
     });
   }
 
-  const t3 = document.querySelector('#top3-table tbody');
-  if (t3) {
-    t3.innerHTML = '';
-    safeTop3.forEach(c => {
-      t3.innerHTML += '<tr class="rank-' + c.rank + '"><td>' + c.rank + '</td><td>' + esc(c.name) + '</td><td>' + c.totalScore + '</td><td>' + c.count + '</td></tr>';
+  const t5 = document.querySelector('#top5-table tbody');
+  if (t5) {
+    t5.innerHTML = '';
+    safeTop5.forEach((p, i) => {
+      const rank = i + 1;
+      const cls = rank <= 3 ? ' class="rank-' + rank + '"' : '';
+      t5.innerHTML += '<tr' + cls + '><td>' + rank + '</td><td>' + esc(p.name) + '</td><td>' + esc(p.class) + '</td><td>' + p.score + '</td></tr>';
     });
   }
 });

@@ -24,7 +24,7 @@ app.use(express.json());
 // ── CONFIG ──
 const ADMIN_PASSWORD = "admin123";
 const SERVER_URL = "https://zs8-quiz.kijmoshi.xyz"; // Change to your server's URL or IP
-const REDIRECT_URL = `bit.ly/zs8-quiz`; // Short URL for easy sharing (optional)
+// const REDIRECT_URL = `bit.ly/zs8-quiz`; // Short URL for easy sharing (optional)
 const QUESTIONS = [
   
   { q: "Jaki numer miało gimnazjum, które istniało przed ZS8?", a: "11", b: "7", c: "13", d: "21", correct: "c" },
@@ -47,6 +47,7 @@ const QUESTIONS = [
 
   { q: "Jak nazywa się święto obchodzone w naszej szkole 31 października?", a: "Halloween", b: "Dziadoween", c: "Dzień Straszenia", d: "Noc Duchów", correct: "b" },
   
+  { q: "W którym roku zamontoano ten element?", a: "2022", b: "2023", c: "2024", d: "2025", correct: "b", media: "image.png" },
   // w ktorym zamontowano ten element + zdj (zegar)
 ];
 const TIME_PER_QUESTION = 20; // seconds
@@ -122,6 +123,7 @@ function sendQuestion() {
     question: q.q,
     a: q.a, b: q.b, c: q.c, d: q.d,
     time: TIME_PER_QUESTION,
+    media: q.media || null,
   });
 
   io.to("players").emit("show-answers", {
@@ -277,7 +279,7 @@ io.on("connection", (socket) => {
   // Screen joins
   socket.on("screen-join", safe(() => {
     socket.join("screens");
-    socket.emit("screen-state", { state: gameState, playerCount: players.size, joinUrl: REDIRECT_URL });
+    socket.emit("screen-state", { state: gameState, playerCount: players.size, joinUrl: SERVER_URL });
 
     if (gameState === "question") {
       const q = QUESTIONS[currentQuestion];
@@ -287,6 +289,7 @@ io.on("connection", (socket) => {
         index: currentQuestion, total: QUESTIONS.length,
         question: q.q, a: q.a, b: q.b, c: q.c, d: q.d,
         time: remaining,
+        media: q.media || null,
       });
     } else if (gameState === "reveal") {
       const q = QUESTIONS[currentQuestion];
@@ -294,6 +297,7 @@ io.on("connection", (socket) => {
         index: currentQuestion, total: QUESTIONS.length,
         question: q.q, a: q.a, b: q.b, c: q.c, d: q.d,
         time: 0,
+        media: q.media || null,
       });
       socket.emit("reveal-answer", {
         correct: q.correct,
