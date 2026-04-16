@@ -49,7 +49,7 @@ const QUESTIONS = [
   
   // w ktorym zamontowano ten element + zdj (zegar)
 ];
-const TIME_PER_QUESTION = 30; // seconds
+const TIME_PER_QUESTION = 20; // seconds
 
 // ── STATE ──
 let players = new Map(); // socketId -> { name, class, score, answers[] }
