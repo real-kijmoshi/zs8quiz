@@ -47,7 +47,7 @@ const QUESTIONS = [
 
   { q: "Jak nazywa się święto obchodzone w naszej szkole 31 października?", a: "Halloween", b: "Dziadoween", c: "Dzień Straszenia", d: "Noc Duchów", correct: "b" },
   
-  { q: "W którym roku zamontoano ten element?", a: "2022", b: "2023", c: "2024", d: "2025", correct: "b", media: "image.png" },
+  { q: "W którym roku zamontoano ten element?", a: "2022", b: "2023", c: "2024", d: "2025", correct: "c", media: "image.png" },
   // w ktorym zamontowano ten element + zdj (zegar)
 ];
 const TIME_PER_QUESTION = 20; // seconds
