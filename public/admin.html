@@ -115,6 +115,12 @@ body{
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io();
+let _adminPw = '';
+
+// Re-authenticate on every (re)connect so the admin room membership is restored
+socket.on('connect', () => {
+  if (_adminPw) socket.emit('admin-login', { password: _adminPw });
+});
 
 document.getElementById('login-btn').addEventListener('click', () => {
   socket.emit('admin-login', { password: document.getElementById('password').value });
@@ -124,6 +130,7 @@ document.getElementById('password').addEventListener('keydown', (e) => {
 });
 
 socket.on('admin-ok', ({ state, questionIndex, playerCount, totalQuestions, autoplay }) => {
+  _adminPw = document.getElementById('password').value;
   document.getElementById('login').style.display = 'none';
   document.getElementById('panel').style.display = 'block';
   document.getElementById('player-count').textContent = playerCount;

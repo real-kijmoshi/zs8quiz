@@ -89,6 +89,14 @@ body{
   display:flex;align-items:center;justify-content:space-between;
   margin-bottom:10px;font-size:.8rem;color:var(--text2);font-weight:500;
 }
+.question-text{
+  font-size:1.1rem;font-weight:600;color:var(--text);
+  margin-bottom:14px;line-height:1.4;text-align:center;
+}
+.question-media{
+  width:100%;max-width:300px;margin:0 auto 16px;
+  border-radius:10px;display:block;
+}
 .timer-track{height:4px;background:var(--surface2);border-radius:2px;margin-bottom:20px;overflow:hidden}
 .timer-track .fill{height:100%;border-radius:2px;background:var(--accent);transition:width .4s linear}
 .timer-track .fill.low{background:var(--red)}
@@ -166,6 +174,8 @@ body{
     <span>Pytanie <span id="q-num"></span> / <span id="q-total"></span></span>
   </div>
   <div class="timer-track"><div class="fill" id="timer-fill"></div></div>
+  <img id="question-media" class="question-media" style="display:none;" />
+  <p class="question-text" id="question-text"></p>
   <div class="answer-grid">
     <button class="answer-btn a-btn" data-ans="a"><span class="lbl">A</span><span class="text" id="ans-a"></span></button>
     <button class="answer-btn b-btn" data-ans="b"><span class="lbl">B</span><span class="text" id="ans-b"></span></button>
@@ -224,10 +234,20 @@ socket.on('connect', () => {
 
 socket.on('joined', () => showOnly('waiting-screen'));
 
-socket.on('show-answers', ({ index, total, a, b, c, d, time }) => {
+socket.on('show-answers', ({ index, total, question, a, b, c, d, time, media }) => {
   showOnly('answer-screen');
   document.getElementById('q-num').textContent = index + 1;
   document.getElementById('q-total').textContent = total;
+  document.getElementById('question-text').textContent = question || '';
+  
+  const mediaEl = document.getElementById('question-media');
+  if (media) {
+    mediaEl.src = '/media/' + media;
+    mediaEl.style.display = 'block';
+  } else {
+    mediaEl.style.display = 'none';
+  }
+  
   document.getElementById('ans-a').textContent = a;
   document.getElementById('ans-b').textContent = b;
   document.getElementById('ans-c').textContent = c;

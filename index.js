@@ -2,6 +2,7 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 const server = http.createServer(app);
@@ -47,7 +48,7 @@ const QUESTIONS = [
 
   { q: "Jak nazywa się święto obchodzone w naszej szkole 31 października?", a: "Halloween", b: "Dziadoween", c: "Dzień Straszenia", d: "Noc Duchów", correct: "b" },
   
-  { q: "W którym roku zamontoano ten element?", a: "2022", b: "2023", c: "2024", d: "2025", correct: "b", media: "image.png" },
+  { q: "W którym roku zamontoano ten element?", a: "2022", b: "2023", c: "2024", d: "2025", correct: "c", media: "IMG_6693.png" },
   // w ktorym zamontowano ten element + zdj (zegar)
 ];
 const TIME_PER_QUESTION = 20; // seconds
@@ -129,8 +130,10 @@ function sendQuestion() {
   io.to("players").emit("show-answers", {
     index: currentQuestion,
     total: QUESTIONS.length,
+    question: q.q,
     a: q.a, b: q.b, c: q.c, d: q.d,
     time: TIME_PER_QUESTION,
+    media: q.media || null,
   });
 
   io.to("admins").emit("question-started", { index: currentQuestion, total: QUESTIONS.length });
@@ -140,6 +143,7 @@ function sendQuestion() {
 
 function revealAnswer() {
   if (questionTimer) { clearTimeout(questionTimer); questionTimer = null; }
+  if (gameState !== "question") return; // guard against double-calls
   if (currentQuestion < 0 || currentQuestion >= QUESTIONS.length) {
     console.error("[revealAnswer] invalid currentQuestion:", currentQuestion);
     return;
@@ -196,8 +200,33 @@ function showFinalResults() {
     });
   }
 
-  // Send general leaderboard to screens
+  // Send general leaderboard to screens and notify admins
   io.to("screens").emit("final-results", results);
+  io.to("admins").emit("final-results", results);
+
+  saveResultsToFile();
+}
+
+function saveResultsToFile() {
+  try {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const filename = path.join(__dirname, `wyniki_${timestamp}.json`);
+    const data = {
+      players: Array.from(players.values()).map(p => ({
+        name: p.name,
+        class: p.class,
+        score: p.score,
+        answers: QUESTIONS.map((q, qi) => ({
+          answer: p.answers[qi] || null,
+          correct: p.answers[qi] === q.correct,
+        })),
+      })),
+    };
+    fs.writeFileSync(filename, JSON.stringify(data, null, 2), "utf8");
+    console.log(`[results] Zapisano wyniki do: ${filename}`);
+  } catch (e) {
+    console.error("[results] Błąd zapisu wyników:", e);
+  }
 }
 
 // ── SOCKET.IO ──
@@ -227,7 +256,9 @@ io.on("connection", (socket) => {
       const remaining = Math.max(0, TIME_PER_QUESTION - elapsed);
       socket.emit("show-answers", {
         index: currentQuestion, total: QUESTIONS.length,
+        question: q.q,
         a: q.a, b: q.b, c: q.c, d: q.d, time: remaining,
+        media: q.media || null,
       });
     } else if (gameState === "reveal") {
       // Joined too late to answer — show result screen with wrong
